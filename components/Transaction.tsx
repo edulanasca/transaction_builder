@@ -9,12 +9,11 @@ import {
   useSensor,
   useSensors
 } from "@dnd-kit/core";
-import {arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy} from "@dnd-kit/sortable";
+import {SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy} from "@dnd-kit/sortable";
 import Instruction from "./Instruction";
-import {nanoid} from "nanoid";
-import {initialState, TransactionAction, reducer} from "../reducer/transactionReducer";
+import {initialState, reducer} from "../reducer/transactionReducer";
 import {useReducer} from "react";
-import {TransactionReducerContext} from "../reducer/transactionReducerContext";
+import {addInstruction, moveInstruction} from "../reducer/transactionActions";
 
 const Transaction = () => {
   const [transaction, dispatch] = useReducer(reducer, initialState);
@@ -38,19 +37,12 @@ const Transaction = () => {
         const oldIndex = transaction.instructions.findIndex(item => item.id === active.id);
         const newIndex = transaction.instructions.findIndex(item => item.id === over.id);
 
-        dispatch({
-          type: TransactionAction.MOVE_INSTRUCTION,
-          payload: { instructionItems: arrayMove(transaction.instructions, oldIndex, newIndex) }
-        });
+        dispatch(moveInstruction(transaction.instructions, oldIndex, newIndex));
       }
     }
-
   }
 
-  const handleAddIns = () => dispatch({
-    type: TransactionAction.ADD_INSTRUCTION,
-    payload: { instructionItem: { id: nanoid() } }
-  });
+  const handleAddIns = () => dispatch(addInstruction());
 
   return (
     <VStack>
@@ -64,9 +56,7 @@ const Transaction = () => {
           items={transaction.instructions}
           strategy={verticalListSortingStrategy}
         >
-          <TransactionReducerContext.Provider value={dispatch}>
-            {transaction.instructions.map(insItem => <Instruction key={insItem.id} id={insItem.id} dispatch={dispatch}/>)}
-          </TransactionReducerContext.Provider>
+          {transaction.instructions.map(insItem => <Instruction key={insItem.id} id={insItem.id} dispatch={dispatch}/>)}
         </SortableContext>
       </DndContext>
       <IconButton aria-label="add-instruction" icon={<AddIcon/>} onClick={handleAddIns}/>

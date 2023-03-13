@@ -2,10 +2,11 @@ import {ChangeEvent, Dispatch, FC, useState} from "react";
 import {useSortable} from "@dnd-kit/sortable";
 import {CSS} from '@dnd-kit/utilities';
 import {InstructionType} from "./factory/instructionType";
-import TransactionFactory from "./TransactionInstructionFactory";
+import TransactionFactory from "./factory/TransactionInstructionFactory";
 import {Card, CardBody, CardHeader, IconButton, Select} from "@chakra-ui/react";
 import {CloseIcon} from "@chakra-ui/icons";
-import {Action, TransactionAction} from "../reducer/transactionReducer";
+import {Action} from "../reducer/transactionReducer";
+import {removeInstruction} from "../reducer/transactionActions";
 
 interface TransactionProps {
   id: string,
@@ -20,7 +21,7 @@ const Instruction: FC<TransactionProps> = ({ id, dispatch }) => {
     //@ts-ignore
     setSelectedOption(e.target.value);
   }
-  const handleRemoveInstruction = () => dispatch({ type: TransactionAction.DELETE_INSTRUCTION, payload: { id } });
+  const handleRemoveInstruction = () => dispatch(removeInstruction(id));
 
   const style = {
     transform: CSS.Transform.toString(transform),

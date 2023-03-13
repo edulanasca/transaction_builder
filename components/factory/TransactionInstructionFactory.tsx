@@ -1,7 +1,7 @@
 import {createElement, Dispatch, FC} from "react";
-import {InstructionType} from "./factory/instructionType";
-import TransferSol from "./factory/TransferSol";
-import {Action} from "../reducer/transactionReducer";
+import {InstructionType} from "./instructionType";
+import TransferSol from "./TransferSol";
+import {Action} from "../../reducer/transactionReducer";
 
 interface TransactionInstructionFactoryProps {
   type: InstructionType;
