@@ -1,5 +1,5 @@
-import {AddIcon} from "@chakra-ui/icons";
-import {Heading, IconButton, VStack} from "@chakra-ui/react";
+import {AddIcon, CheckIcon} from "@chakra-ui/icons";
+import {Button, Heading, IconButton, VStack} from "@chakra-ui/react";
 import {
   closestCenter,
   DndContext,
@@ -12,11 +12,15 @@ import {
 import {SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy} from "@dnd-kit/sortable";
 import Instruction from "./Instruction";
 import {initialState, reducer} from "../reducer/transactionReducer";
-import {useReducer} from "react";
+import {useReducer, useState} from "react";
 import {addInstruction, moveInstruction} from "../reducer/transactionActions";
+import {clusterApiUrl, Connection, TransactionMessage, VersionedTransaction} from "@solana/web3.js";
+import {useWallet} from "@solana/wallet-adapter-react";
 
 const Transaction = () => {
   const [transaction, dispatch] = useReducer(reducer, initialState);
+  const [sendingTx, setSendingTx] = useState(false);
+  const wallet = useWallet();
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -44,6 +48,23 @@ const Transaction = () => {
 
   const handleAddIns = () => dispatch(addInstruction());
 
+  const sendTx = async () => {
+    if (wallet.connected && wallet.publicKey) {
+      setSendingTx(true);
+      const connection = new Connection(clusterApiUrl("devnet"));
+      const blockhash = await connection.getLatestBlockhash();
+      const msg = new TransactionMessage({
+        payerKey: wallet.publicKey,
+        recentBlockhash: blockhash.blockhash,
+        instructions: transaction.instructions.map(it => it.instruction)
+      }).compileToV0Message();
+      const tx = new VersionedTransaction(msg);
+
+      await wallet.sendTransaction(tx, connection);
+      setSendingTx(false);
+    }
+  }
+
   return (
     <VStack>
       <Heading>{`Bytes used: ${transaction.txBytes} / 1232`}</Heading>
@@ -60,6 +81,13 @@ const Transaction = () => {
         </SortableContext>
       </DndContext>
       <IconButton aria-label="add-instruction" icon={<AddIcon/>} onClick={handleAddIns}/>
+      <Button
+        leftIcon={<CheckIcon/>}
+        isLoading={sendingTx}
+        onClick={sendTx}
+      >
+        Send Transaction
+      </Button>
     </VStack>
   );
 }

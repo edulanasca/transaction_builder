@@ -1,4 +1,4 @@
-import {TransactionInstruction, TransactionMessage, VersionedTransaction} from "@solana/web3.js";
+import {TransactionInstruction, TransactionMessage} from "@solana/web3.js";
 import {NATIVE_MINT} from "@solana/spl-token";
 
 export interface InstructionItem {
@@ -17,7 +17,6 @@ export enum TransactionAction {
 
 export type Action = { type: TransactionAction, payload: Record<string, any> }
 type State = {
-  transaction?: VersionedTransaction,
   txBytes: number,
   instructions: InstructionItem[]
 }
@@ -37,7 +36,7 @@ export const reducer = (state: State, action: Action): State => {
       return action.payload.instructionItems;
     case TransactionAction.DELETE_INSTRUCTION:
       instructions = state.instructions.filter(item => item.id !== action.payload.id);
-      return { ...state, txBytes: calculateTxBytes(instructions), instructions }
+      return { ...state, txBytes: instructions.length === 0 ? 0 :  calculateTxBytes(instructions), instructions };
     case TransactionAction.ADD_SOL_INS:
     case TransactionAction.ADD_TOKEN_INS:
       instructions = state.instructions.map(item => {
