@@ -37,7 +37,7 @@ const Instruction: FC<TransactionProps> = ({ id, dispatch }) => {
         </Select>
         <IconButton aria-label="Remove instruction" size="sm" icon={<CloseIcon/>} onClick={handleRemoveInstruction}/>
       </CardHeader>
-      <CardBody>
+      <CardBody paddingTop={2}>
         <TransactionFactory type={selectedOption} props={{id, dispatch}}/>
       </CardBody>
     </Card>

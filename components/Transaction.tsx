@@ -1,5 +1,5 @@
 import {AddIcon, CheckIcon} from "@chakra-ui/icons";
-import {Button, Heading, IconButton, VStack} from "@chakra-ui/react";
+import {Button, Heading, IconButton, useToast, VStack} from "@chakra-ui/react";
 import {
   closestCenter,
   DndContext,
@@ -14,13 +14,16 @@ import Instruction from "./Instruction";
 import {initialState, reducer} from "../reducer/transactionReducer";
 import {useReducer, useState} from "react";
 import {addInstruction, moveInstruction} from "../reducer/transactionActions";
-import {clusterApiUrl, Connection, TransactionMessage, VersionedTransaction} from "@solana/web3.js";
-import {useWallet} from "@solana/wallet-adapter-react";
+import {TransactionMessage, VersionedTransaction} from "@solana/web3.js";
+import {useConnection, useWallet} from "@solana/wallet-adapter-react";
 
 const Transaction = () => {
   const [transaction, dispatch] = useReducer(reducer, initialState);
   const [sendingTx, setSendingTx] = useState(false);
   const wallet = useWallet();
+  const { connection } = useConnection();
+  const toast = useToast();
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -38,10 +41,10 @@ const Transaction = () => {
 
     if (over !== null) {
       if (active.id !== over.id) {
-        const oldIndex = transaction.instructions.findIndex(item => item.id === active.id);
-        const newIndex = transaction.instructions.findIndex(item => item.id === over.id);
+        const oldIndex = transaction.instructionItems.findIndex(item => item.id === active.id);
+        const newIndex = transaction.instructionItems.findIndex(item => item.id === over.id);
 
-        dispatch(moveInstruction(transaction.instructions, oldIndex, newIndex));
+        dispatch(moveInstruction(transaction.instructionItems, oldIndex, newIndex));
       }
     }
   }
@@ -49,18 +52,23 @@ const Transaction = () => {
   const handleAddIns = () => dispatch(addInstruction());
 
   const sendTx = async () => {
-    if (wallet.connected && wallet.publicKey) {
-      setSendingTx(true);
-      const connection = new Connection(clusterApiUrl("devnet"));
-      const blockhash = await connection.getLatestBlockhash();
-      const msg = new TransactionMessage({
-        payerKey: wallet.publicKey,
-        recentBlockhash: blockhash.blockhash,
-        instructions: transaction.instructions.map(it => it.instruction)
-      }).compileToV0Message();
-      const tx = new VersionedTransaction(msg);
+    try {
+      if (wallet.connected && wallet.publicKey) {
+        setSendingTx(true);
 
-      await wallet.sendTransaction(tx, connection);
+        const blockhash = await connection.getLatestBlockhash();
+        const msg = new TransactionMessage({
+          payerKey: wallet.publicKey,
+          recentBlockhash: blockhash.blockhash,
+          instructions: transaction.instructionItems.flatMap(it => it.instructions)
+        }).compileToV0Message();
+        const tx = new VersionedTransaction(msg);
+
+        await wallet.sendTransaction(tx, connection);
+        setSendingTx(false);
+      }
+    } catch (err) {
+      toast({title: "Error in transaction", description: (err as string).toString(), status: "error", isClosable: true});
       setSendingTx(false);
     }
   }
@@ -74,10 +82,10 @@ const Transaction = () => {
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={transaction.instructions}
+          items={transaction.instructionItems}
           strategy={verticalListSortingStrategy}
         >
-          {transaction.instructions.map(insItem => <Instruction key={insItem.id} id={insItem.id} dispatch={dispatch}/>)}
+          {transaction.instructionItems.map(insItem => <Instruction key={insItem.id} id={insItem.id} dispatch={dispatch}/>)}
         </SortableContext>
       </DndContext>
       <IconButton aria-label="add-instruction" icon={<AddIcon/>} onClick={handleAddIns}/>

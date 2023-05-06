@@ -1,7 +1,8 @@
 import {createElement, Dispatch, FC} from "react";
 import {InstructionType} from "./instructionType";
-import TransferSol from "./TransferSol";
 import {Action} from "../../reducer/transactionReducer";
+import TransferSol from "./TransferSol";
+import TransferToken from "./TransferToken";
 
 interface TransactionInstructionFactoryProps {
   type: InstructionType;
@@ -15,7 +16,7 @@ export interface TransactionInstructionProps {
 
 const transactionInstructionFactory = {
   [InstructionType.TRANSFER_SOL]: (props: TransactionInstructionProps) => createElement(TransferSol, props),
-  [InstructionType.TRANSFER_TOKEN]: (props: TransactionInstructionProps) => createElement(TransferSol, props)
+  [InstructionType.TRANSFER_TOKEN]: (props: TransactionInstructionProps) => createElement(TransferToken, props)
 }
 
 const TransactionInstructionFactory: FC<TransactionInstructionFactoryProps> = (props) => {
